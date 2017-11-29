@@ -3,13 +3,16 @@
 
 from graphics import *
 from TicTacToeButton import Button, Tile
+import math
 
 class GraphicInterface():
     """ Graphic interface for tic-tac-toe game """
 
-    def __init__(self):
+    def __init__(self, n):
+        self.n = n
         self.win = GraphWin('Tic-Tac-Toe', 600, 400)
         self.win.setBackground('grey')
+        screenW, screenH = 600, 400
 
         banner = Text(Point(300, 30), 'Tic-Tac-Toe')
         banner.setSize(24)
@@ -20,26 +23,33 @@ class GraphicInterface():
         self.header.setSize(18)
         self.header.draw(self.win)
 
-        Line(Point(255, 70), Point(255, 340)).draw(self.win)
-        Line(Point(345, 70), Point(345, 340)).draw(self.win)
-        Line(Point(165, 160), Point(435, 160)).draw(self.win)
-        Line(Point(165, 250), Point(435, 250)).draw(self.win)
-
-        self.displayBoard = []
-        #Midpoint of each playable square on the board
-        boardCoords = [(210, 115), (300, 115), (390, 115),
-                       (210, 205), (300, 205), (390, 205),
-                       (210, 295), (300, 295), (390, 295)]
-        for i in range(9):
-            self.displayBoard.append(Tile(self.win, Point(boardCoords[i][0], boardCoords[i][1]), 90, 90))
-
+        self.drawBoard(screenW, screenH, self.win)
+        
         self.startButton = Button(self.win, Point(200, 370), 100, 30, 'Start')
         self.quitButton = Button(self.win, Point(400, 370), 100, 30, 'Quit')
-        self.startButton.activate()
+        self.startButton.activate()   #future update: will want to activate this only after user chooses an n
         self.quitButton.activate()
 
         self.firstGame = True
 
+    def drawBoard(self, screenW, screenH, win):
+        
+        x, y = math.floor(screenW * 0.275), math.floor(screenH * 0.175) # (x,y) at top left of game board
+        w, h = math.floor(screenW * 0.45),  math.floor(screenH * 0.675) # width/height of game board
+
+        #Create vectors marking midpoints of each square on the game board
+        xCoords, yCoords = [], []
+        for i in range(self.n):
+            xCoords.append(x + round(w/self.n/2) + round(i * w / self.n))
+            yCoords.append(y + round(w/self.n/2) + round(i * h / self.n))
+
+        #Create the clickable tiles centered in each square
+        self.displayBoard = []
+        #Midpoint of each playable square on the board
+        for m in range(self.n):
+            self.displayBoard.append([])
+            for n in range(self.n):
+                self.displayBoard[m].append(Tile(win, Point(xCoords[m], yCoords[n]), round(w/self.n), round(h/self.n)))
 
     def getClick(self):
         #wait for user to click on a button / tile
@@ -50,9 +60,10 @@ class GraphicInterface():
                 return 'Start'
             if self.quitButton.clicked(pt):
                 return 'Quit'
-            for t in range(9):
-                if self.displayBoard[t].clicked(pt):
-                    return t
+            for m in range(self.n):
+                for n in range(self.n):
+                    if self.displayBoard[m][n].clicked(pt):
+                        return (m, n)
 
     def gameEnd(self, board, winner, turn, gameQuit):
         if gameQuit: return True
@@ -60,8 +71,9 @@ class GraphicInterface():
         self.startButton.setLabel('Play Again')
         self.startButton.activate()
 
-        for t in self.displayBoard:
-            t.deactivate()
+        for m in self.displayBoard:
+            for n in m:
+                n.deactivate()
 
         if winner == ' ':
             #If there's no winner, it's a tie
@@ -79,36 +91,37 @@ class GraphicInterface():
     def initiateGame(self):
         self.firstGame = False
         self.startButton.deactivate()
-        for t in self.displayBoard:
-            t.unDraw()
-            t.activate()
-        
+        for m in self.displayBoard:
+            for n in m:
+                n.unDraw()
+                n.activate()
                 
-    def getInput(self, turn, board):
+    def getInput(self, turn, board, turns):
         if self.firstGame:
             click = self.getClick()
             if click == 'Quit':
                 #shut down
-                return turn, board, True
+                return turn, board, turns, (0,0), True
             elif click == 'Start':
                 self.initiateGame()
-                return turn, board, False
+                return turn, board, turns, (0,0), False
         else:
             self.header.setText('{0}\'s Turn'.format(turn.upper()))
             click = self.getClick()
             if click == 'Quit':
-                return turn, board, True
+                return turn, board, turns, (0,0), True
             else:
-                board[click] = turn
+                board[click[0]][click[1]] = turn
+                turns += 1
                 if turn == 'x':
-                    self.displayBoard[click].drawX()
-                    self.displayBoard[click].deactivate() #no longer playable
+                    self.displayBoard[click[0]][click[1]].drawX()
+                    self.displayBoard[click[0]][click[1]].deactivate() #no longer playable
                     turn = 'o'
                 else:
-                    self.displayBoard[click].drawO()
-                    self.displayBoard[click].deactivate() #no longer playable
+                    self.displayBoard[click[0]][click[1]].drawO()
+                    self.displayBoard[click[0]][click[1]].deactivate() #no longer playable
                     turn = 'x'
-                return turn, board, False
+                return turn, board, turns, click, False
 
     def close(self):
         self.win.close()
