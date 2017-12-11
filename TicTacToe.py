@@ -9,12 +9,9 @@ from TicTacToeInterface import GraphicInterface
 class TicTacToe():
     """ Main application """
 
-    def __init__(self, interface, n):
+    def __init__(self, interface):
         self.interface = interface
-        self.winner = ' '
-        self.n = n #board size (nxn)
-        self.maxTurns = self.n**2
-        
+
     def checkWin(self, board, play):
         """ Check to see if a player has won """
         #if a turn hasn't been played yet, nobody can have won
@@ -36,7 +33,7 @@ class TicTacToe():
         if play[0] != play[1]:
             return False
         #if any diagonal entry doesn't match the one before it, there's not a win
-        for i in range(1, self.n):
+        for i in range(1, self.gameSize): #start at second diagonal because check looks back one
             if board[i][i] != board[i-1][i-1]:
                 return False
         #if all diagonal entries match, someone has won
@@ -45,68 +42,68 @@ class TicTacToe():
     def checkTwoDiagonal(self, board, play):
         """ check for a win in second diagonal """
         #if the latest play wasn't on the diagonal, don't need to go thru with the check
-        if play[0] != self.n-play[1]-1:
+        if play[0] != self.gameSize-play[1]-1:
             return False
         #if any diagonal entry doesn't match the one before it, there's not a win
-        for i in range(1, self.n):
-            if board[i][self.n-i-1] != board[i-1][self.n-i]:
+        for i in range(1, self.gameSize):
+            if board[i][self.gameSize-i-1] != board[i-1][self.gameSize-i]:
                 return False
         #if all diagonal entries match, someone has won
         return True
 
     def checkRow(self, board, play):
         """ check for a win in the row last played """
-        for i in range(1, self.n):
+        for i in range(1, self.gameSize):
             if board[play[0]][i] != board[play[0]][i-1]:
                 return False
         return True
-    
+
     def checkColumn(self, board, play):
         """ check for in win in the column last played """
-        for i in range(1, self.n):
+        for i in range(1, self.gameSize):
             if board[i][play[1]] != board[i-1][play[1]]:
                 return False
         return True
-            
+
     def resetGame(self):
         """ reset everything to a fresh game """
-        board = []
-        for m in range(self.n):
-            tempRow = []
-            for n in range(self.n):
-                tempRow.append(' ')
-            board.append(tempRow)
+        board = self.buildBoard()
         turn = 'x'
         self.winner = ' '
         turns = 0
         return board, turn, turns
 
-    def run(self):
-        """ Main gameplay method """
-        board = []          #Initialize an empty game board
-        for m in range(self.n):
+    def buildBoard(self):
+        """ initialize an empty game board """
+        board = []
+        for m in range(self.gameSize):
             tempRow = []
-            for n in range(self.n):
+            for n in range(self.gameSize):
                 tempRow.append(' ')
             board.append(tempRow)
-        turn = 'x'          #Player x goes first
+        return board
+
+    def run(self):
+        """ Main gameplay method """
+        #Initialize game
+        self.winner = ' '
         gameQuit = False    #Flag indicating a player has quit
+        self.gameSize, gameQuit = self.interface.getGameSize() #board size (nxn)
+        maxTurns = self.gameSize**2        #define max turns possible on board
+        board = self.buildBoard()   #create an empty game board
+        turn = 'x'          #Player x goes first
         turns = 0           #Count of turns played
         play = (0,0)        #Initialize first play for win checking
 
         #Keep taking turns until either board is full, someone wins, or someone quits
         while not gameQuit:
-            while not (self.checkWin(board, play) or turns == self.maxTurns or gameQuit):
-                turn, board, turns, play, gameQuit = self.interface.getInput(turn, board, turns)
+            while not (self.checkWin(board, play) or turns == maxTurns or gameQuit):
+                turn, board, turns, play, gameQuit = self.interface.getInput(turn, board, turns, self.gameSize)
             gameQuit = interface.gameEnd(board, self.winner, turn, gameQuit)
             board, turn, turns = self.resetGame()
-        interface.close()
-
+        self.interface.close()
 
 if __name__ == '__main__':
-    n=50
-    interface = GraphicInterface(n)
-    theGame = TicTacToe(interface, n)
+    interface = GraphicInterface()
+    theGame = TicTacToe(interface)
     theGame.run()
-
-

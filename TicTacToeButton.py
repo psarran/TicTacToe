@@ -37,12 +37,20 @@ class Button():
         self.label.setTextColor('darkgrey')
         self.rect.setWidth(1)
         self.active = False
-        
+
     def clicked(self, pt):
         """ if button is active this will determine if there was a click
             (pt) within the button """
         return (self.active and self.xmin <= pt.getX() <= self.xmax
                             and self.ymin <= pt.getY() <= self.ymax)
+
+    def highlight(self):
+        """ highlight / switch to 'selected' """
+        self.rect.setWidth(4)
+
+    def unHighlight(self):
+        """ unhighlight / switch to 'not selected' """
+        self.rect.setWidth(2)
 
     def getLabel(self):
         """ returns the label text """
@@ -51,6 +59,11 @@ class Button():
     def setLabel(self, text):
         """ changes the label text """
         self.label.setText(text)
+
+    def unDraw(self):
+        """ undraw the button """
+        self.rect.undraw()
+        self.label.undraw()
 
 
 class Tile():
@@ -71,9 +84,9 @@ class Tile():
         self.rect.draw(win)
         self.rect.setOutline('grey')
         self.rect.setFill('light grey')
-        
+
         self.deactivate()
-        
+
         self.center = center
         self.win = win
 
@@ -88,7 +101,7 @@ class Tile():
         self.markTwo = Line(Point(x2,y1), Point(x1,y2))
         self.markOne.draw(self.win)
         self.markTwo.draw(self.win)
-        
+
     def drawO(self):
         """ draws an O """
         self.markOne = Circle(self.center, (self.xmax-self.xmin)/2*.8)
