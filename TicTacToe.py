@@ -71,7 +71,9 @@ class TicTacToe():
         turn = 'x'
         self.winner = ' '
         turns = 0
-        return board, turn, turns
+        play = (0,0)
+        maxTurns = self.gameSize**2
+        return board, turn, turns, play, maxTurns
 
     def buildBoard(self):
         """ initialize an empty game board """
@@ -98,9 +100,9 @@ class TicTacToe():
         #Keep taking turns until either board is full, someone wins, or someone quits
         while not gameQuit:
             while not (self.checkWin(board, play) or turns == maxTurns or gameQuit):
-                turn, board, turns, play, gameQuit = self.interface.getInput(turn, board, turns, self.gameSize)
-            gameQuit = interface.gameEnd(board, self.winner, turn, gameQuit)
-            board, turn, turns = self.resetGame()
+                turn, board, turns, play, gameQuit = self.interface.getInput(turn, board, turns)
+            gameQuit, self.gameSize = interface.gameEnd(board, self.winner, turn, gameQuit)
+            board, turn, turns, play, maxTurns = self.resetGame()
         self.interface.close()
 
 if __name__ == '__main__':

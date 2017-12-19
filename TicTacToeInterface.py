@@ -9,7 +9,7 @@ class GraphicInterface():
     """ Graphic interface for tic-tac-toe game """
 
     def __init__(self):
-        self.win = GraphWin('Tic-Tac-Toe', 600, 400)
+        self.win = GraphWin('Tic-Tac-Toe', 600, 400, autoflush=False)
         self.win.setBackground('grey')
         self.screenW, self.screenH = 600, 400
 
@@ -18,13 +18,12 @@ class GraphicInterface():
         banner.setStyle('bold')
         banner.draw(self.win)
 
-        self.header = Text(Point(300, 55), 'Welcome')
+        self.header = Text(Point(300, 55), 'Pick Game Size:')
         self.header.setSize(18)
         self.header.draw(self.win)
 
         self.startButton = Button(self.win, Point(200, 370), 100, 30, 'Start')
         self.quitButton = Button(self.win, Point(400, 370), 100, 30, 'Quit')
-        self.startButton.activate()   #future update: will want to activate this only after user chooses an n
         self.quitButton.activate()
 
         self.firstGame = True
@@ -32,8 +31,8 @@ class GraphicInterface():
     def getGameSize(self):
         """ An interface to choose size of game board """
         screenW, screenH, win = self.screenW, self.screenH, self.win
-        x, y = math.floor(screenW * 0.275), math.floor(screenH * 0.175) # (x,y) at top left of game board
-        w, h = math.floor(screenW * 0.45),  math.floor(screenH * 0.675) # width/height of game board
+        x, y = math.floor(screenW * 0.275), math.floor(screenH * 0.175) # (x,y) at top left of selections
+        w, h = math.floor(screenW * 0.45),  math.floor(screenH * 0.675) # width/height of selections
         numRows, numColumns = 3, 5
 
         #Create vectors marking midpoints of each square option
@@ -48,18 +47,19 @@ class GraphicInterface():
         for i in range(numRows*numColumns):
             m = i % numColumns
             n = int((i-m)/numColumns)
-            print(i, m, n, xCoords[m], yCoords[n])
-            self.sizeChoices.append(Button(win, Point(xCoords[m], yCoords[n]), round(w/numColumns), round(h/numRows), '{0}'.format(i+2)))
+            self.sizeChoices.append(Button(win, Point(xCoords[m], yCoords[n]), round(w/numColumns*.9), round(h/numRows*.7), '{0}'.format(i+2)))
             self.sizeChoices[i].activate()
 
         gameSizeChoice = 0
         startQuit = ' '
-        while not (gameSizeChoice > 0 and (startQuit=='Quit' or startQuit=='Start')):
+        while startQuit!='Quit' and startQuit!='Start':
             click = self. getClick()
             if type(click) == int:
-                if gameSizeChoice != 0: #unHighlight any previous selection
+                if gameSizeChoice == 0: #can't start game until selection is made
+                    self.startButton.activate()
+                else: #unHighlight any previous selection
                     self.sizeChoices[gameSizeChoice-2].unHighlight()
-                gameSizeChoice = click
+                gameSizeChoice=click
                 self.sizeChoices[click-2].highlight()
             if click == 'Quit':
                 startQuit = click
@@ -68,10 +68,9 @@ class GraphicInterface():
 
         self.gameSize = gameSizeChoice
 
-        if startQuit=='Start': # only draw the board if we're starting a game
+        if startQuit=='Start': # only undraw the choices if we're going to start a game
             for m in range(numRows * numColumns):
                 self.sizeChoices[m].unDraw()
-            self.drawBoard(self.screenW, self.screenH, self.win)
 
         return gameSizeChoice, startQuit=='Quit'
 
@@ -91,6 +90,7 @@ class GraphicInterface():
             self.displayBoard.append([])
             for n in range(self.gameSize):
                 self.displayBoard[m].append(Tile(win, Point(xCoords[m], yCoords[n]), round(w/self.gameSize), round(h/self.gameSize)))
+                self.displayBoard[m][n].activate()
 
     def getClick(self):
         #wait for user to click on a button / tile
@@ -101,6 +101,11 @@ class GraphicInterface():
                 return 'Start'
             if self.quitButton.clicked(pt):
                 return 'Quit'
+            try:
+                if self.changeButton.clicked(pt):
+                    return 'Change'
+            except:
+                pass
 
             if self.firstGame:  #get clicks for game size
                 for i in range(len(self.sizeChoices)):
@@ -124,35 +129,50 @@ class GraphicInterface():
 
         if winner == ' ':
             #If there's no winner, it's a tie
-            self.header.setText('Game Over - Scratch')
+            self.header.setText('Game Over - Draw')
         else:
             self.header.setText('{0} Wins!'.format(winner.upper()))
 
+        self.changeButton = Button(self.win, Point(300, 370), 90, 30, 'Change Game')
+        self.changeButton.activate()
+
         click = self.getClick()
         if click == 'Quit':
-            return True
-        else:
+            return True, self.gameSize
+        elif click == 'Start':
+            self.changeButton.unDraw()
             self.initiateGame()
-            return False
+            return False, self.gameSize
+        elif click == 'Change':
+            for m in self.displayBoard: #undraw the old board
+                for n in m:
+                    n.unDraw()
+            self.firstGame = True
+            self.changeButton.unDraw()
+            self.startButton.setLabel('Start')
+            gameSizeChoice, startQuit = self.getGameSize()
+            return startQuit, gameSizeChoice
+
 
     def initiateGame(self):
-        self.firstGame = False
         self.startButton.deactivate()
-        self.drawBoard(self.screenW, self.screenH, self.win)
-        for m in self.displayBoard:
-            for n in m:
-                n.unDraw()
-                n.activate()
+        if self.firstGame: self.drawBoard(self.screenW, self.screenH, self.win)
+        if not self.firstGame:
+            for m in self.displayBoard:
+                for n in m:
+                    n.unMark()
+                    n.activate()
 
-    def getInput(self, turn, board, turns, gameSize):
+
+    def getInput(self, turn, board, turns):
         if self.firstGame:
-            self.gameSize = gameSize
-            click = self.getClick()
-            if click == 'Quit':
+            #click = self.getClick()
+            #if click == 'Quit':
                 #shut down
-                return turn, board, turns, (0,0), True
-            elif click == 'Start':
-                self.initiateGame()
+            #    return turn, board, turns, (0,0), True
+            #elif click == 'Start':
+            self.initiateGame()
+            self.firstGame = False
             return turn, board, turns, (0,0), False
         else:
             self.header.setText('{0}\'s Turn'.format(turn.upper()))

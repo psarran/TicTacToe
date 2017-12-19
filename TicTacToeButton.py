@@ -108,9 +108,13 @@ class Tile():
         self.markTwo = self.markOne
         self.markOne.draw(self.win)
 
-    def unDraw(self):
+    def unMark(self):
         self.markOne.undraw()
         self.markTwo.undraw()
+
+    def unDraw(self):
+        self.unMark()
+        self.rect.undraw()
 
     def activate(self):
         """ sets to active / available to be clicked """
