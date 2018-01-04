@@ -59,7 +59,7 @@ class TicTacToe():
         return True
 
     def checkColumn(self, board, play):
-        """ check for in win in the column last played """
+        """ check for a win in the column last played """
         for i in range(1, self.gameSize):
             if board[i][play[1]] != board[i-1][play[1]]:
                 return False
