@@ -71,7 +71,7 @@ class Tile():
 
     def __init__(self, win, center, width, height):
         """ Create blank Tile object which consists of a Rectangle centered at 'center'
-            with and a Circle and X that can be activated when played """
+            on which a Circle and X that can be activated when played """
         w, h = width/2, height/2
         x, y = center.getX(), center.getY()
         self.xmin, self.ymin = x-w, y-h
